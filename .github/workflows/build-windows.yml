@@ -6,6 +6,7 @@ on:
 
 jobs:
   build:
+    name: Build Windows GPU
     runs-on: windows-latest
 
     steps:
@@ -15,20 +16,31 @@ jobs:
           sparse-checkout: |
             crates
             web
+            cache/contextual
+            research/preflop-evolution/behavior/pass3
           sparse-checkout-cone-mode: true
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build GTOpen with GPU
-        run: cargo build --release -p server --features gpu
+        shell: pwsh
+        run: |
+          cargo build --release -p server --features gpu
 
       - name: Package GTOpen
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path package
-          Copy-Item target/release/gto-server.exe package/
-          Copy-Item web package/web -Recurse
+
+          Copy-Item `
+            target/release/gto-server.exe `
+            package/gto-server.exe
+
+          Copy-Item `
+            web `
+            package/web `
+            -Recurse
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
@@ -36,3 +48,4 @@ jobs:
           name: GTOpen-Windows-GPU
           path: package/
           if-no-files-found: error
+          retention-days: 30
